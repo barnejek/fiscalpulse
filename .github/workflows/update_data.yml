@@ -1,0 +1,41 @@
+name: Update IMF Data
+
+on:
+  schedule:
+    # Runs on the 1st of each month at 06:00 UTC
+    # IMF publishes WEO in April and October — monthly cron ensures prompt pickup
+    - cron: '0 6 1 * *'
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit updated JSON
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch IMF data and build JSON
+        run: python fetch_data.py
+
+      - name: Commit updated data (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/fiscal_data.json cache/
+          if git diff --cached --quiet; then
+            echo "No data changes — skipping commit"
+          else
+            git commit -m "chore: update IMF WEO data [$(date +'%Y-%m-%d')]"
+            git push
+          fi

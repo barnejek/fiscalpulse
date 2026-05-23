@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiscalPulse — OECD Sovereign Debt Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root[data-theme="dark"] {
+  --bg:        #0d1117; --bg2: #161b22; --bg3: #1c2128; --bg4: #21262d;
+  --border:    #30363d; --border2: #444c56;
+  --tx:        #e6edf3; --tx2: #8b949e; --tx3: #484f58;
+  --accent:    #2f81f7; --accent2: #388bfd;
+  --green:     #238636; --green2: #3fb950; --green3: #1a3a1a;
+  --amber:     #9e6a03; --amber2: #d29922; --amber3: #3a2800;
+  --red:       #da3633; --red2:   #f85149; --red3:   #3a1010;
+  --chart-grid: rgba(255,255,255,0.05);
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+:root[data-theme="light"] {
+  --bg:        #f6f8fa; --bg2: #ffffff;  --bg3: #ffffff;  --bg4: #f3f4f6;
+  --border:    #d0d7de; --border2: #b0b7be;
+  --tx:        #1f2328; --tx2: #636c76;  --tx3: #9ca3af;
+  --accent:    #0969da; --accent2: #0550ae;
+  --green:     #1a7f37; --green2: #1a7f37; --green3: #dafbe1;
+  --amber:     #9e6a03; --amber2: #9e6a03; --amber3: #fff8c5;
+  --red:       #cf222e; --red2:   #cf222e; --red3:   #ffebe9;
+  --chart-grid: rgba(0,0,0,0.06);
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--tx);
+  min-height: 100vh; font-size: 14px; line-height: 1.5;
+  transition: background .2s, color .2s;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 16px; height: 56px;
+}
+.logo-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-wrap img { height: 28px; object-fit: contain; }
+.brand { font-size: 17px; font-weight: 600; color: var(--tx); letter-spacing: -.3px; }
+.brand span { color: var(--accent); }
+header .sep { flex: 1; }
+.last-updated { font-size: 12px; color: var(--tx3); }
+.theme-btn {
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  color: var(--tx2); font-size: 13px; display: flex; align-items: center; gap: 5px;
+  transition: background .15s, border-color .15s;
+}
+.theme-btn:hover { background: var(--bg3); border-color: var(--border2); }
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 60px; }
+
+/* ── Country selector ────────────────────────────────────────────── */
+.section-label {
+  font-size: 11px; font-weight: 600; color: var(--tx3);
+  text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px;
+}
+.country-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;
+}
+.flag-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px;
+  cursor: pointer; color: var(--tx2); font-size: 13px;
+  transition: all .15s; white-space: nowrap;
+}
+.flag-btn:hover { border-color: var(--accent); color: var(--tx); background: var(--bg4); }
+.flag-btn.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 500;
+}
+.flag-btn .flag { font-size: 16px; }
+
+/* ── View tabs ───────────────────────────────────────────────────── */
+.view-tabs {
+  display: flex; gap: 4px; margin-bottom: 24px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 4px; width: fit-content;
+}
+.tab-btn {
+  padding: 7px 20px; border-radius: 7px; border: none;
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  color: var(--tx2); background: transparent;
+  transition: all .15s;
+}
+.tab-btn:hover { color: var(--tx); }
+.tab-btn.active { background: var(--bg2); color: var(--tx); box-shadow: 0 1px 6px rgba(0,0,0,.2); }
+
+/* ── Cards ───────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px;
+}
+.card-title {
+  font-size: 12px; font-weight: 600; color: var(--tx2);
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px;
+}
+
+/* ── Metric cards ─────────────────────────────────────────────────── */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.metric-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.metric-card .label { font-size: 11px; color: var(--tx2); margin-bottom: 6px; }
+.metric-card .value { font-size: 24px; font-weight: 600; color: var(--tx); line-height: 1; }
+.metric-card .sub   { font-size: 11px; color: var(--tx3); margin-top: 4px; }
+.metric-card.score-card .value { font-size: 36px; }
+
+/* ── Tier badge ──────────────────────────────────────────────────── */
+.tier-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.tier-ig  { background: var(--green3); color: var(--green2); }
+.tier-w   { background: var(--amber3); color: var(--amber2); }
+.tier-hr  { background: var(--red3);   color: var(--red2); }
+
+/* ── Score bar ───────────────────────────────────────────────────── */
+.score-bar-wrap { display: flex; align-items: center; gap: 8px; width: 100%; }
+.score-bar-bg { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+.score-label { font-size: 12px; font-weight: 600; min-width: 30px; text-align: right; }
+
+/* ── Chart containers ────────────────────────────────────────────── */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-grid.single { grid-template-columns: 1fr; }
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+/* ── Score table ─────────────────────────────────────────────────── */
+.score-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.score-table th {
+  text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600;
+  color: var(--tx3); text-transform: uppercase; letter-spacing: .4px;
+  border-bottom: 1px solid var(--border);
+}
+.score-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.score-table tr:last-child td { border-bottom: none; }
+.score-num {
+  font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+  display: inline-block; min-width: 28px; text-align: center;
+}
+
+/* ── Overview ranking ────────────────────────────────────────────── */
+.overview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.overview-table th {
+  padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
+  color: var(--tx3); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+  white-space: nowrap;
+}
+.overview-table th:hover { color: var(--tx2); }
+.overview-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.overview-table tbody tr { cursor: pointer; transition: background .1s; }
+.overview-table tbody tr:hover { background: var(--bg4); }
+.overview-table tbody tr:last-child td { border-bottom: none; }
+.country-cell { display: flex; align-items: center; gap: 8px; }
+.country-cell .flag { font-size: 18px; }
+
+/* ── Stress test ─────────────────────────────────────────────────── */
+.scenario-btns { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.scenario-btn {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg4); color: var(--tx2); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .15s;
+}
+.scenario-btn:hover  { border-color: var(--border2); color: var(--tx); }
+.scenario-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(47,129,247,.1); }
+
+.stress-params { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.param-card {
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px;
+}
+.param-card .param-label { font-size: 11px; color: var(--tx3); margin-bottom: 4px; }
+.param-card .param-val   { font-size: 18px; font-weight: 600; }
+.param-val.neg { color: var(--red2); }
+.param-val.pos { color: var(--amber2); }
+
+/* ── DR risk section ─────────────────────────────────────────────── */
+.risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+/* ── Country header ──────────────────────────────────────────────── */
+.country-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.country-flag-big { font-size: 40px; }
+.country-meta h2  { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.country-meta .iso { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+/* ── Loading / error ─────────────────────────────────────────────── */
+#loading {
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px; min-height: 300px;
+  color: var(--tx2);
+}
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .chart-grid  { grid-template-columns: 1fr; }
+  .risk-grid   { grid-template-columns: 1fr; }
+  .stress-params { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  main { padding: 16px; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .stress-params { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo-wrap" href="#" onclick="resetView()">
+    <img src="assets/fiscal_logo.png" alt="FiscalPulse logo" id="logo-img">
+    <span class="brand">Fiscal<span>Pulse</span></span>
+  </a>
+  <div class="sep"></div>
+  <span class="last-updated" id="last-updated">Loading…</span>
+  <button class="theme-btn" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span> <span id="theme-label">Light</span>
+  </button>
+</header>
+
+<main>
+  <div id="loading">
+    <div class="spinner"></div>
+    <span>Loading IMF data…</span>
+  </div>
+
+  <div id="app" style="display:none">
+    <!-- Country selector -->
+    <div class="section-label">Select country</div>
+    <div class="country-grid" id="country-grid"></div>
+
+    <!-- View tabs -->
+    <div class="view-tabs">
+      <button class="tab-btn active" id="tab-overview" onclick="setView('overview')">🌍 Overview</button>
+      <button class="tab-btn" id="tab-invest"   onclick="setView('invest')">📈 Investments (DZA)</button>
+      <button class="tab-btn" id="tab-risk"     onclick="setView('risk')">🛡 Risk (DR)</button>
+    </div>
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────── -->
+    <div id="view-overview">
+      <div class="card">
+        <div class="card-title">OECD Sovereign Risk Matrix — all countries ranked by composite score</div>
+        <table class="overview-table" id="overview-table">
+          <thead>
+            <tr>
+              <th onclick="sortOverview('name')">Country</th>
+              <th onclick="sortOverview('composite')" style="text-align:center">Score ▾</th>
+              <th>Tier</th>
+              <th onclick="sortOverview('debt')" style="text-align:right">Gross Debt % GDP</th>
+              <th onclick="sortOverview('balance')" style="text-align:right">Primary Bal.</th>
+              <th onclick="sortOverview('rg')" style="text-align:right">r − g</th>
+              <th onclick="sortOverview('structural')" style="text-align:right">Structural Bal.</th>
+            </tr>
+          </thead>
+          <tbody id="overview-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── INVESTMENTS (DZA) ────────────────────────────────── -->
+    <div id="view-invest" style="display:none">
+      <div id="invest-empty" class="card" style="text-align:center;padding:40px;color:var(--tx2)">
+        ← Select a country above to view investment analysis
+      </div>
+      <div id="invest-content" style="display:none">
+        <div class="country-header">
+          <div class="country-flag-big" id="dza-flag"></div>
+          <div class="country-meta">
+            <h2 id="dza-name"></h2>
+            <div class="iso" id="dza-iso"></div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div id="dza-tier-badge"></div>
+            <div style="margin-top:6px;font-size:12px;color:var(--tx2)" id="dza-latest-year"></div>
+          </div>
+        </div>
+
+        <!-- 4 key metrics -->
+        <div class="metric-grid">
+          <div class="metric-card score-card">
+            <div class="label">Composite Score</div>
+            <div class="value" id="dza-score" style="color:var(--accent)"></div>
+            <div class="sub">1 = best · 5 = worst</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Gross Debt % GDP</div>
+            <div class="value" id="dza-debt"></div>
+            <div class="sub" id="dza-debt-sub"></div>
+          </div>
+          <div class="metric-card">
+            <div class="label">r − g Spread</div>
+            <div class="value" id="dza-rg"></div>
+            <div class="sub">Interest rate minus nominal GDP growth</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Primary Balance</div>
+            <div class="value" id="dza-pb"></div>
+            <div class="sub">% GDP (excl. interest payments)</div>
+          </div>
+        </div>
+
+        <!-- Charts row 1: debt trajectory + fiscal balance -->
+        <div class="chart-grid" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-title">Debt Trajectory 2015 – 2031</div>
+            <div class="chart-wrap"><canvas id="chart-debt"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Fiscal Balance Components</div>
+            <div class="chart-wrap"><canvas id="chart-balance"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Charts row 2: r-g + interest burden -->
+        <div class="chart-grid" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-title">r − g Snowball Effect (pp)</div>
+            <div class="chart-wrap"><canvas id="chart-rg"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Interest Payments as % of Revenue</div>
+            <div class="chart-wrap"><canvas id="chart-interest"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Scoring breakdown -->
+        <div class="card">
+          <div class="card-title">Investment Scoring Breakdown</div>
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Weight</th>
+                <th>Current Value</th>
+                <th>Score</th>
+                <th>Assessment</th>
+                <th style="width:200px">Score Bar</th>
+              </tr>
+            </thead>
+            <tbody id="dza-score-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RISK (DR) ─────────────────────────────────────────── -->
+    <div id="view-risk" style="display:none">
+      <div id="risk-empty" class="card" style="text-align:center;padding:40px;color:var(--tx2)">
+        ← Select a country above to view risk analysis
+      </div>
+      <div id="risk-content" style="display:none">
+        <div class="country-header">
+          <div class="country-flag-big" id="dr-flag"></div>
+          <div class="country-meta">
+            <h2 id="dr-name"></h2>
+            <div class="iso" id="dr-iso"></div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div id="dr-tier-badge"></div>
+          </div>
+        </div>
+
+        <!-- Risk metrics -->
+        <div class="metric-grid" style="margin-bottom:20px">
+          <div class="metric-card">
+            <div class="label">Composite Risk Score</div>
+            <div class="value" id="dr-score" style="font-size:36px"></div>
+            <div class="sub">1 = low risk · 5 = high risk</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Structural Balance</div>
+            <div class="value" id="dr-structural"></div>
+            <div class="sub">% of potential GDP</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Interest / Revenue</div>
+            <div class="value" id="dr-int-rev"></div>
+            <div class="sub">Debt servicing burden</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">3Y Debt Change</div>
+            <div class="value" id="dr-debt-chg"></div>
+            <div class="sub">Projected change in gross debt (pp)</div>
+          </div>
+        </div>
+
+        <!-- Risk charts -->
+        <div class="risk-grid">
+          <div class="card">
+            <div class="card-title">Revenue vs Expenditure % GDP</div>
+            <div class="chart-wrap"><canvas id="chart-revexp"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Net vs Gross Debt % GDP</div>
+            <div class="chart-wrap"><canvas id="chart-netgross"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Stress test section -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">Stress Testing — Debt-at-Risk Simulation</div>
+
+          <div class="scenario-btns" id="scenario-btns">
+            <button class="scenario-btn active" data-s="all">All scenarios</button>
+            <button class="scenario-btn" data-s="geopolitical">⚡ Geopolitical Shock</button>
+            <button class="scenario-btn" data-s="repricing">💥 Market Repricing</button>
+            <button class="scenario-btn" data-s="us_spillover">🌐 US Spillover</button>
+          </div>
+
+          <div class="stress-params" id="stress-params"></div>
+
+          <div class="chart-wrap" style="height:260px"><canvas id="chart-stress"></canvas></div>
+          <div style="margin-top:12px;font-size:11px;color:var(--tx3)">
+            Baseline follows IMF WEO projections. Shock scenarios apply parameter shifts for 3 years.
+          </div>
+        </div>
+
+        <!-- DR scoring breakdown -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-title">Risk Component Breakdown</div>
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th>Risk Factor</th>
+                <th>Weight</th>
+                <th>Value</th>
+                <th>Score</th>
+                <th>Interpretation</th>
+                <th style="width:200px">Risk Level</th>
+              </tr>
+            </thead>
+            <tbody id="dr-score-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- #app -->
+</main>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let DATA = null;
+let selectedISO = null;
+let currentView = 'overview';
+let overviewSort = { key: 'composite', dir: 1 };
+let activeScenario = 'all';
+let charts = {};
+
+const SCORE_LABELS = { 1: 'Very Good', 2: 'Good', 3: 'Neutral', 4: 'Weak', 5: 'High Risk' };
+const COMP_DEFS = [
+  { key: 'debt_gross',         label: 'Gross Debt Level',       col: 'GGXWDG_NGDP',     fmt: v => v != null ? v.toFixed(1)+'%' : '—', weight: 25 },
+  { key: 'debt_change_3y',     label: '3Y Debt Trajectory',     col: 'debt_change_3y',   fmt: v => v != null ? (v>0?'+':'')+v.toFixed(1)+' pp' : '—', weight: 20 },
+  { key: 'structural_balance', label: 'Structural Discipline',  col: 'GGSB_NPGDP',       fmt: v => v != null ? (v>0?'+':'')+v.toFixed(1)+'%' : '—', weight: 20 },
+  { key: 'r_minus_g',          label: 'Snowball Effect (r−g)',  col: 'r_minus_g',         fmt: v => v != null ? (v>0?'+':'')+v.toFixed(2)+' pp' : '—', weight: 20 },
+  { key: 'interest_revenue',   label: 'Interest Burden',        col: 'interest_rev',      fmt: v => v != null ? v.toFixed(1)+'%' : '—', weight: 15 },
+];
+
+const SCENARIOS = {
+  geopolitical: { name: 'Geopolitical Shock',  desc: 'Sustained energy price rise, trade disruption', dg: -1.5, dr: +1.0, dpb: -0.5 },
+  repricing:    { name: 'Market Repricing',     desc: 'Asset bubble burst, sharp rate spike',          dg: -1.0, dr: +2.0, dpb: -0.7 },
+  us_spillover: { name: 'US Spillover',         desc: 'USD liquidity premium erosion, global yield rise', dg: -0.5, dr: +0.8, dpb: -0.3 },
+};
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('theme-icon').textContent  = isDark ? '🌙' : '☀️';
+  document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
+  Object.values(charts).forEach(c => { if (c) { applyChartTheme(c); c.update(); } });
+}
+
+function applyChartTheme(chart) {
+  const grid = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+  const tx2  = getComputedStyle(document.documentElement).getPropertyValue('--tx2').trim();
+  if (chart.options.scales) {
+    Object.values(chart.options.scales).forEach(s => {
+      if (s.grid)  s.grid.color = grid;
+      if (s.ticks) s.ticks.color = tx2;
+    });
+  }
+  if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = tx2;
+}
+
+// ── Load data ────────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const r = await fetch('data/fiscal_data.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    DATA = await r.json();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('last-updated').textContent = 'Updated: ' + DATA.metadata.last_updated;
+    buildCountryGrid();
+    buildOverview();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<span style="color:var(--red2)">⚠ Failed to load data: ' + e.message + '</span>';
+  }
+}
+
+// ── Country grid ──────────────────────────────────────────────────────────────
+function buildCountryGrid() {
+  const grid = document.getElementById('country-grid');
+  Object.entries(DATA.countries).forEach(([iso, c]) => {
+    const btn = document.createElement('button');
+    btn.className = 'flag-btn';
+    btn.id = 'flag-' + iso;
+    btn.innerHTML = `<span class="flag">${c.flag}</span>${c.name}`;
+    btn.onclick = () => selectCountry(iso);
+    grid.appendChild(btn);
+  });
+}
+
+function selectCountry(iso) {
+  // toggle off
+  if (selectedISO === iso) {
+    document.getElementById('flag-' + iso).classList.remove('active');
+    selectedISO = null;
+    if (currentView === 'invest') showEmpty('invest');
+    if (currentView === 'risk')   showEmpty('risk');
+    return;
+  }
+  if (selectedISO) document.getElementById('flag-' + selectedISO)?.classList.remove('active');
+  selectedISO = iso;
+  document.getElementById('flag-' + iso).classList.add('active');
+  if (currentView === 'invest') populateInvest(iso);
+  if (currentView === 'risk')   populateRisk(iso);
+}
+
+function showEmpty(view) {
+  document.getElementById(view + '-empty').style.display = '';
+  document.getElementById(view + '-content').style.display = 'none';
+}
+
+function resetView() {
+  if (selectedISO) {
+    document.getElementById('flag-' + selectedISO)?.classList.remove('active');
+    selectedISO = null;
+  }
+  setView('overview');
+  return false;
+}
+
+// ── View switching ─────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  ['overview','invest','risk'].forEach(name => {
+    document.getElementById('view-' + name).style.display = name === v ? '' : 'none';
+    document.getElementById('tab-' + (name === 'overview' ? 'overview' : name === 'invest' ? 'invest' : 'risk'))
+      ?.classList.toggle('active', name === v);
+  });
+  if (v === 'invest' && selectedISO) populateInvest(selectedISO);
+  if (v === 'invest' && !selectedISO) showEmpty('invest');
+  if (v === 'risk'   && selectedISO) populateRisk(selectedISO);
+  if (v === 'risk'   && !selectedISO) showEmpty('risk');
+}
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+function buildOverview() {
+  const rows = Object.entries(DATA.countries).map(([iso, c]) => ({
+    iso, name: c.name, flag: c.flag,
+    composite: c.scores.composite,
+    tier: c.scores.tier,
+    debt: c.latest?.GGXWDG_NGDP,
+    balance: c.latest?.GGXONLB_NGDP,
+    rg: c.latest?.r_minus_g,
+    structural: c.latest?.GGSB_NPGDP,
+  }));
+  rows.sort((a, b) => (a[overviewSort.key] ?? 999) - (b[overviewSort.key] ?? 999) * overviewSort.dir > 0 ? overviewSort.dir : -overviewSort.dir);
+  rows.sort((a, b) => a.composite - b.composite);
+
+  const tbody = document.getElementById('overview-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.onclick = () => { selectCountry(r.iso); setView('invest'); };
+    tr.innerHTML = `
+      <td><div class="country-cell"><span class="flag">${r.flag}</span><strong>${r.name}</strong> <span style="color:var(--tx3);font-size:11px">${r.iso}</span></div></td>
+      <td style="text-align:center">${scoreChip(r.composite)}</td>
+      <td>${tierBadge(r.tier)}</td>
+      <td style="text-align:right">${fmt1(r.debt)}%</td>
+      <td style="text-align:right;color:${r.balance>=0?'var(--green2)':'var(--red2)'}">${fmtSign(r.balance)}%</td>
+      <td style="text-align:right;color:${(r.rg??0)>0?'var(--red2)':'var(--green2)'}">${fmtSign(r.rg)} pp</td>
+      <td style="text-align:right;color:${(r.structural??0)>=-1?'var(--green2)':(r.structural??0)>=-3?'var(--amber2)':'var(--red2)'}">${fmtSign(r.structural)}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function sortOverview(key) {
+  if (overviewSort.key === key) overviewSort.dir *= -1;
+  else { overviewSort.key = key; overviewSort.dir = 1; }
+  buildOverview();
+}
+
+// ── Investments (DZA) ─────────────────────────────────────────────────────────
+function populateInvest(iso) {
+  const c = DATA.countries[iso];
+  document.getElementById('invest-empty').style.display = 'none';
+  document.getElementById('invest-content').style.display = '';
+
+  document.getElementById('dza-flag').textContent = c.flag;
+  document.getElementById('dza-name').textContent = c.name;
+  document.getElementById('dza-iso').textContent  = iso + ' · IMF WEO · ' + DATA.metadata.last_updated;
+  document.getElementById('dza-latest-year').textContent = 'Latest data: ' + c.latest_year;
+  document.getElementById('dza-tier-badge').innerHTML = tierBadge(c.scores.tier);
+
+  const sc = c.scores.composite;
+  const scEl = document.getElementById('dza-score');
+  scEl.textContent = sc.toFixed(2);
+  scEl.style.color = scoreColor(sc);
+
+  document.getElementById('dza-debt').textContent     = fmt1(c.latest?.GGXWDG_NGDP) + '%';
+  document.getElementById('dza-debt-sub').textContent = 'Gross general government debt';
+  const rgEl = document.getElementById('dza-rg');
+  const rg = c.latest?.r_minus_g;
+  rgEl.textContent = (rg != null ? (rg > 0 ? '+' : '') + rg.toFixed(2) + ' pp' : '—');
+  rgEl.style.color = rg != null && rg > 0 ? 'var(--red2)' : 'var(--green2)';
+
+  const pbEl = document.getElementById('dza-pb');
+  const pb = c.latest?.GGXONLB_NGDP;
+  pbEl.textContent = pb != null ? (pb > 0 ? '+' : '') + pb.toFixed(1) + '%' : '—';
+  pbEl.style.color = pb != null && pb >= 0 ? 'var(--green2)' : 'var(--red2)';
+
+  const years = DATA.metadata ? range(DATA.metadata.year_start, DATA.metadata.year_end) : [];
+  const projStart = DATA.metadata.proj_start;
+
+  drawDebtChart(c, years, projStart);
+  drawBalanceChart(c, years, projStart);
+  drawRGChart(c, years, projStart);
+  drawInterestChart(c, years, projStart);
+  buildScoreTable('dza-score-tbody', iso);
+}
+
+// ── Risk (DR) ─────────────────────────────────────────────────────────────────
+function populateRisk(iso) {
+  const c = DATA.countries[iso];
+  document.getElementById('risk-empty').style.display = 'none';
+  document.getElementById('risk-content').style.display = '';
+
+  document.getElementById('dr-flag').textContent = c.flag;
+  document.getElementById('dr-name').textContent = c.name;
+  document.getElementById('dr-iso').textContent  = iso + ' · Risk Assessment · ' + DATA.metadata.last_updated;
+  document.getElementById('dr-tier-badge').innerHTML = tierBadge(c.scores.tier);
+
+  const sc = c.scores.composite;
+  const drScEl = document.getElementById('dr-score');
+  drScEl.textContent = sc.toFixed(2);
+  drScEl.style.color = scoreColor(sc);
+
+  const struct = c.latest?.GGSB_NPGDP;
+  const ir     = c.latest?.interest_rev;
+  const dc3    = c.latest?.debt_change_3y;
+
+  const structEl = document.getElementById('dr-structural');
+  structEl.textContent = struct != null ? (struct>0?'+':'')+struct.toFixed(1)+'%' : '—';
+  structEl.style.color = struct!=null && struct>=-1 ? 'var(--green2)' : struct!=null && struct>=-3 ? 'var(--amber2)' : 'var(--red2)';
+
+  const irEl = document.getElementById('dr-int-rev');
+  irEl.textContent = ir != null ? ir.toFixed(1)+'%' : '—';
+  irEl.style.color = ir != null && ir < 10 ? 'var(--green2)' : ir != null && ir < 15 ? 'var(--amber2)' : 'var(--red2)';
+
+  const dc3El = document.getElementById('dr-debt-chg');
+  dc3El.textContent = dc3 != null ? (dc3>0?'+':'')+dc3.toFixed(1)+' pp' : '—';
+  dc3El.style.color = dc3!=null && dc3<0 ? 'var(--green2)' : dc3!=null && dc3<3 ? 'var(--amber2)' : 'var(--red2)';
+
+  const years = range(DATA.metadata.year_start, DATA.metadata.year_end);
+  const projStart = DATA.metadata.proj_start;
+
+  drawRevExpChart(c, years, projStart);
+  drawNetGrossChart(c, years, projStart);
+  buildStressTest(iso);
+  buildScoreTable('dr-score-tbody', iso);
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+function getThemeVars() {
+  const s = getComputedStyle(document.documentElement);
+  return {
+    grid: s.getPropertyValue('--chart-grid').trim(),
+    tx2:  s.getPropertyValue('--tx2').trim(),
+    border: s.getPropertyValue('--border').trim(),
+    accent: s.getPropertyValue('--accent').trim(),
+    green2: s.getPropertyValue('--green2').trim(),
+    red2:   s.getPropertyValue('--red2').trim(),
+    amber2: s.getPropertyValue('--amber2').trim(),
+  };
+}
+
+function baseChartOpts(tv, yLabel) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } },
+      tooltip: {
+        backgroundColor: 'rgba(0,0,0,.85)', titleColor: '#fff', bodyColor: '#ccc',
+        padding: 10, cornerRadius: 6,
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: tv.grid }, ticks: { color: tv.tx2, maxTicksLimit: 9, font: { size: 10 } },
+        border: { display: false },
+      },
+      y: {
+        grid: { color: tv.grid }, ticks: { color: tv.tx2, font: { size: 10 } },
+        border: { display: false },
+        title: yLabel ? { display: true, text: yLabel, color: tv.tx2, font: { size: 10 } } : undefined,
+      },
+    },
+  };
+}
+
+function getSeries(c, col, years) {
+  return years.map(yr => c.series?.[col]?.[String(yr)] ?? null);
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); charts[id] = null; }
+}
+
+function projBg(years, projStart) {
+  // Returns annotation-style: used via dataset backgroundColor with segment
+  return years.map(yr => yr >= projStart);
+}
+
+function makeAnnotatedDataset(label, data, years, projStart, color, dashed) {
+  return {
+    label, data,
+    borderColor: color,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderDash: dashed ? [4, 3] : [],
+    pointRadius: 0, pointHoverRadius: 4,
+    segment: {
+      borderDash: ctx => years[ctx.p0DataIndex] >= projStart ? [4, 3] : [],
+    },
+    tension: 0.3,
+  };
+}
+
+function drawDebtChart(c, years, projStart) {
+  destroyChart('chart-debt');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-debt').getContext('2d');
+  const gross = getSeries(c, 'GGXWDG_NGDP', years);
+  const net   = getSeries(c, 'GGXWDN_NGDP', years);
+
+  const ds = [
+    makeAnnotatedDataset('Gross Debt', gross, years, projStart, tv.red2, false),
+    makeAnnotatedDataset('Net Debt',   net,   years, projStart, tv.accent, false),
+  ];
+  ds[0].fill = false;
+  ds[1].fill = false;
+
+  charts['chart-debt'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: years, datasets: ds },
+    options: { ...baseChartOpts(tv, '% GDP'), plugins: { ...baseChartOpts(tv).plugins,
+      annotation: undefined,
+      legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } }
+    }},
+  });
+}
+
+function drawBalanceChart(c, years, projStart) {
+  destroyChart('chart-balance');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-balance').getContext('2d');
+  charts['chart-balance'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        makeAnnotatedDataset('Overall Balance',    getSeries(c,'GGXCNL_NGDP', years),  years, projStart, tv.red2,   false),
+        makeAnnotatedDataset('Primary Balance',    getSeries(c,'GGXONLB_NGDP', years), years, projStart, tv.accent, false),
+        makeAnnotatedDataset('Structural Balance', getSeries(c,'GGSB_NPGDP', years),   years, projStart, tv.green2, true),
+      ],
+    },
+    options: { ...baseChartOpts(tv, '% GDP'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } } }
+    },
+  });
+}
+
+function drawRGChart(c, years, projStart) {
+  destroyChart('chart-rg');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-rg').getContext('2d');
+  const vals = getSeries(c, 'r_minus_g', years);
+  charts['chart-rg'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [{
+        label: 'r − g',
+        data: vals,
+        backgroundColor: vals.map(v => v == null ? 'transparent' : v > 0 ? tv.red2+'99' : tv.green2+'99'),
+        borderColor:     vals.map(v => v == null ? 'transparent' : v > 0 ? tv.red2 : tv.green2),
+        borderWidth: 1, borderRadius: 2,
+      }],
+    },
+    options: { ...baseChartOpts(tv, 'pp'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { display: false } }
+    },
+  });
+}
+
+function drawInterestChart(c, years, projStart) {
+  destroyChart('chart-interest');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-interest').getContext('2d');
+  charts['chart-interest'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        makeAnnotatedDataset('Interest / Revenue %', getSeries(c,'interest_rev', years), years, projStart, tv.amber2, false),
+      ],
+    },
+    options: { ...baseChartOpts(tv, '%'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { display: false } }
+    },
+  });
+}
+
+function drawRevExpChart(c, years, projStart) {
+  destroyChart('chart-revexp');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-revexp').getContext('2d');
+  charts['chart-revexp'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        makeAnnotatedDataset('Revenue',     getSeries(c,'GGR_NGDP', years), years, projStart, tv.green2, false),
+        makeAnnotatedDataset('Expenditure', getSeries(c,'GGX_NGDP', years), years, projStart, tv.red2,   false),
+      ],
+    },
+    options: { ...baseChartOpts(tv, '% GDP'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } } }
+    },
+  });
+}
+
+function drawNetGrossChart(c, years, projStart) {
+  destroyChart('chart-netgross');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-netgross').getContext('2d');
+  charts['chart-netgross'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        makeAnnotatedDataset('Gross Debt', getSeries(c,'GGXWDG_NGDP', years), years, projStart, tv.red2,   false),
+        makeAnnotatedDataset('Net Debt',   getSeries(c,'GGXWDN_NGDP', years), years, projStart, tv.accent, false),
+      ],
+    },
+    options: { ...baseChartOpts(tv, '% GDP'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } } }
+    },
+  });
+}
+
+// ── Stress test ───────────────────────────────────────────────────────────────
+function buildStressTest(iso) {
+  const c = DATA.countries[iso];
+  const stress = c.stress || {};
+  const base = DATA.metadata.current_year;
+  const stressYears = [base, base+1, base+2, base+3];
+
+  // Params display
+  const paramsEl = document.getElementById('stress-params');
+  paramsEl.innerHTML = '';
+  Object.entries(SCENARIOS).forEach(([key, s]) => {
+    const div = document.createElement('div');
+    div.className = 'param-card';
+    div.innerHTML = `
+      <div class="param-label">${s.name}</div>
+      <div style="display:flex;gap:12px;margin-top:6px">
+        <div><div style="font-size:10px;color:var(--tx3)">Δ Growth</div>
+             <div class="param-val neg">${s.dg > 0 ? '+' : ''}${s.dg} pp</div></div>
+        <div><div style="font-size:10px;color:var(--tx3)">Δ Rate</div>
+             <div class="param-val pos">+${s.dr} pp</div></div>
+        <div><div style="font-size:10px;color:var(--tx3)">Δ Prim. Bal.</div>
+             <div class="param-val neg">${s.dpb} pp</div></div>
+      </div>
+    `;
+    paramsEl.appendChild(div);
+  });
+
+  // Scenario buttons
+  const btns = document.getElementById('scenario-btns');
+  btns.querySelectorAll('.scenario-btn').forEach(btn => {
+    btn.onclick = () => {
+      btns.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeScenario = btn.dataset.s;
+      drawStressChart(iso);
+    };
+  });
+
+  drawStressChart(iso);
+}
+
+function drawStressChart(iso) {
+  const c = DATA.countries[iso];
+  const stress = c.stress || {};
+  const base = DATA.metadata.current_year;
+  const debtNow = c.series?.GGXWDG_NGDP?.[String(base)] ?? c.latest?.GGXWDG_NGDP;
+  const stressYears = [base, base+1, base+2, base+3];
+
+  const withNow = arr => arr ? [debtNow, ...arr] : null;
+
+  destroyChart('chart-stress');
+  const tv = getThemeVars();
+  const ctx = document.getElementById('chart-stress').getContext('2d');
+
+  const colors = { baseline: tv.accent, geopolitical: tv.amber2, repricing: tv.red2, us_spillover: '#a371f7' };
+  const names  = { baseline: 'Baseline (IMF WEO)', geopolitical: '⚡ Geopolitical Shock', repricing: '💥 Market Repricing', us_spillover: '🌐 US Spillover' };
+
+  const show = activeScenario === 'all' ? Object.keys(stress) : ['baseline', activeScenario];
+
+  const datasets = show.filter(k => stress[k]).map(k => ({
+    label: names[k] || k,
+    data: withNow(stress[k]),
+    borderColor: colors[k] || '#999',
+    backgroundColor: 'transparent',
+    borderWidth: k === 'baseline' ? 2 : 2,
+    borderDash: k === 'baseline' ? [] : [5, 3],
+    pointRadius: 4, pointHoverRadius: 6,
+    tension: 0.3,
+  }));
+
+  charts['chart-stress'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: stressYears, datasets },
+    options: { ...baseChartOpts(tv, 'Gross Debt % GDP'),
+      plugins: { ...baseChartOpts(tv).plugins, legend: { labels: { color: tv.tx2, boxWidth: 12, font: { size: 11 } } } }
+    },
+  });
+}
+
+// ── Score table ───────────────────────────────────────────────────────────────
+function buildScoreTable(tbodyId, iso) {
+  const c = DATA.countries[iso];
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  COMP_DEFS.forEach(def => {
+    const s = c.scores.components[def.key];
+    const val = c.latest?.[def.col];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${def.label}</td>
+      <td style="color:var(--tx2)">${def.weight}%</td>
+      <td>${def.fmt(val)}</td>
+      <td>${scoreChip(s, true)}</td>
+      <td style="color:var(--tx2)">${SCORE_LABELS[s] || '—'}</td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar-bg">
+            <div class="score-bar-fill" style="width:${s*20}%;background:${scoreColor(s)}"></div>
+          </div>
+          <span class="score-label" style="color:${scoreColor(s)}">${s}/5</span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  // Total row
+  const comp = c.scores.composite;
+  const tr = document.createElement('tr');
+  tr.style.fontWeight = '600';
+  tr.innerHTML = `
+    <td>Composite Score</td>
+    <td style="color:var(--tx2)">100%</td>
+    <td>—</td>
+    <td>${scoreChip(comp, false)}</td>
+    <td style="color:var(--tx2)">${c.scores.tier}</td>
+    <td>
+      <div class="score-bar-wrap">
+        <div class="score-bar-bg">
+          <div class="score-bar-fill" style="width:${(comp/5)*100}%;background:${scoreColor(comp)}"></div>
+        </div>
+        <span class="score-label" style="color:${scoreColor(comp)}">${comp.toFixed(2)}</span>
+      </div>
+    </td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function tierBadge(tier) {
+  const cls = tier === 'Investment Grade' ? 'tier-ig' : tier === 'Watch' ? 'tier-w' : 'tier-hr';
+  const dot = tier === 'Investment Grade' ? '●' : tier === 'Watch' ? '◎' : '▲';
+  return `<span class="tier-badge ${cls}">${dot} ${tier}</span>`;
+}
+
+function scoreColor(s) {
+  if (s <= 1.5) return 'var(--green2)';
+  if (s <= 2.5) return '#3fb950';
+  if (s <= 3.0) return 'var(--amber2)';
+  if (s <= 4.0) return '#e3a437';
+  return 'var(--red2)';
+}
+
+function scoreChip(s, integer) {
+  const display = integer ? String(s) : s.toFixed(2);
+  return `<span class="score-num" style="background:${scoreColor(s)}22;color:${scoreColor(s)}">${display}</span>`;
+}
+
+function fmt1(v) { return v != null ? v.toFixed(1) : '—'; }
+function fmtSign(v) { return v != null ? (v > 0 ? '+' : '') + v.toFixed(1) : '—'; }
+function range(a, b) { const r = []; for (let i = a; i <= b; i++) r.push(i); return r; }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
