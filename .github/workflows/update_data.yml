@@ -2,9 +2,8 @@ name: Update IMF Data
 
 on:
   schedule:
-    # Runs on the 1st of each month at 06:00 UTC
-    # IMF publishes WEO in April and October — monthly cron ensures prompt pickup
-    - cron: '0 6 1 * *'
+    # Runs every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
   workflow_dispatch:   # allow manual trigger from GitHub UI
 
 jobs:
