@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -240,7 +240,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 60px; }
   <div class="sep"></div>
   <span class="last-updated" id="last-updated">Loading…</span>
   <button class="theme-btn" onclick="toggleTheme()">
-    <span id="theme-icon">☀️</span> <span id="theme-label">Light</span>
+    <span id="theme-icon">🌙</span> <span id="theme-label">Dark</span>
   </button>
 </header>
 
@@ -461,6 +461,95 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 24px 60px; }
       </div>
     </div>
   </div><!-- #app -->
+
+  <!-- Methodology footer -->
+  <div id="methodology" style="margin-top:48px;padding-top:32px;border-top:1px solid var(--border)">
+    <div class="section-label" style="margin-bottom:20px">Methodology</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+      <div class="card">
+        <div class="card-title">❄ The Snowball Effect (r − g)</div>
+        <p style="color:var(--tx2);line-height:1.7;font-size:13px">
+          The <strong style="color:var(--tx)">r − g spread</strong> measures the difference between the effective
+          interest rate on public debt (<em>r</em>) and the nominal GDP growth rate (<em>g</em>).
+          It is the central concept in debt sustainability analysis.
+        </p>
+        <p style="color:var(--tx2);line-height:1.7;font-size:13px;margin-top:10px">
+          When <strong style="color:var(--red2)">r &gt; g</strong>, the economy grows more slowly than debt costs accrue —
+          even a balanced primary budget leads to a rising debt-to-GDP ratio. The debt "snowballs" automatically,
+          requiring ever-larger primary surpluses just to stabilise it.
+        </p>
+        <p style="color:var(--tx2);line-height:1.7;font-size:13px;margin-top:10px">
+          When <strong style="color:var(--green2)">r &lt; g</strong>, nominal GDP growth "inflates away" the debt burden —
+          the government can run moderate primary deficits while still keeping debt on a stable or declining path.
+          This was the dominant regime in advanced economies for much of 2015–2021.
+        </p>
+        <div style="margin-top:14px;padding:12px;background:var(--bg4);border-radius:8px;font-size:12px;color:var(--tx2);font-family:monospace">
+          Debt(t+1) = Debt(t) × (1 + r) / (1 + g) − Primary Balance
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Composite Score & Risk Tiers</div>
+        <p style="color:var(--tx2);line-height:1.7;font-size:13px;margin-bottom:12px">
+          The composite score (1 = lowest risk, 5 = highest) is a weighted average of five fiscal components:
+        </p>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:6px 8px;color:var(--tx3);font-weight:600">Component</th>
+            <th style="text-align:center;padding:6px 8px;color:var(--tx3);font-weight:600">Weight</th>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;color:var(--tx2)">Gross Debt % GDP</td><td style="text-align:center;padding:6px 8px;color:var(--tx)">25%</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;color:var(--tx2)">3-year Debt Trajectory</td><td style="text-align:center;padding:6px 8px;color:var(--tx)">20%</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;color:var(--tx2)">Structural Balance</td><td style="text-align:center;padding:6px 8px;color:var(--tx)">20%</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;color:var(--tx2)">r − g Snowball Spread</td><td style="text-align:center;padding:6px 8px;color:var(--tx)">20%</td></tr>
+          <tr><td style="padding:6px 8px;color:var(--tx2)">Interest / Revenue Burden</td><td style="text-align:center;padding:6px 8px;color:var(--tx)">15%</td></tr>
+        </table>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <span class="tier-badge tier-ig">● Investment Grade &nbsp;score &lt; 2.0</span>
+          <span class="tier-badge tier-w">◎ Watch &nbsp;score 2.0 – 3.0</span>
+          <span class="tier-badge tier-hr">▲ High Risk &nbsp;score &gt; 3.0</span>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-title">⚡ Stress Test Scenarios</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px">Geopolitical Shock</div>
+            <p style="font-size:12px;color:var(--tx2);line-height:1.6">
+              Sustained rise in energy commodity prices and global trade disruption. Models the fiscal impact of
+              a supply-side shock similar to 2022: lower growth (−1.5 pp/yr), higher borrowing costs (+1.0 pp),
+              and deteriorating primary balances (−0.5 pp/yr) due to emergency spending.
+            </p>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px">Market Repricing</div>
+            <p style="font-size:12px;color:var(--tx2);line-height:1.6">
+              A sharp correction in overvalued financial markets (e.g. tech sector), triggering a global
+              financial stress event. Tax revenues from capital gains fall, funding costs spike sharply (+2.0 pp),
+              and growth contracts (−1.0 pp/yr) as credit conditions tighten.
+            </p>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px">US Spillover</div>
+            <p style="font-size:12px;color:var(--tx2);line-height:1.6">
+              Erosion of the USD safe-haven premium under pressure from surging US debt supply. Rising US Treasury
+              yields drag up global borrowing costs (+0.8 pp) regardless of local fiscal discipline — a transmission
+              shock that punishes all sovereign issuers indiscriminately.
+            </p>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--tx3);margin-top:14px">
+          Source: IMF World Economic Outlook & Fiscal Monitor, April 2026. Stress parameters calibrated to IMF fan-chart methodology.
+          Projections are illustrative — not investment advice.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -496,6 +585,14 @@ function toggleTheme() {
   document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
   Object.values(charts).forEach(c => { if (c) { applyChartTheme(c); c.update(); } });
 }
+// Sync button label to initial theme on load
+(function() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('theme-icon').textContent  = isDark ? '☀️' : '🌙';
+    document.getElementById('theme-label').textContent = isDark ? 'Light' : 'Dark';
+  });
+})();
 
 function applyChartTheme(chart) {
   const grid = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
@@ -533,7 +630,7 @@ function buildCountryGrid() {
     btn.className = 'flag-btn';
     btn.id = 'flag-' + iso;
     btn.innerHTML = `<span class="flag">${c.flag}</span>${c.name}`;
-    btn.onclick = () => selectCountry(iso);
+    btn.onclick = () => { selectCountry(iso); setView('invest'); };
     grid.appendChild(btn);
   });
 }
